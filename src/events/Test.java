@@ -27,10 +27,12 @@ public class Test {
 		boolean[] pattern1 = {true, false, false, false, false};
 		boolean[] pattern2 = {false, true, false, true, true};
 
-			fiveValues.train(pattern1);
+//			fiveValues.train(pattern1);
 			fiveValues.train(pattern2);
 
 		System.out.println("HopfieldNetwork is:\n"+fiveValues);
+//		System.out.println("Trained with:\n"+Arrays.toString(pattern1));
+		System.out.println("Trained with:\n"+Arrays.toString(pattern2)+"\n");
 		boolean[][] presents = {
 				{true, true, false, false, false},//1
 				{true, false, true , false, false},//2
@@ -43,7 +45,13 @@ public class Test {
 		};
 		int count = 1;
 		for(boolean[] test: presents){
-			System.out.println("Presented HopfieldNetwork with:\n      "+count+") "+Arrays.toString(test)+"\nresult = "+Arrays.toString(fiveValues.present(test)));
+			String result = Arrays.toString(fiveValues.present(test));
+			System.out.println("Presented HopfieldNetwork with:\n      "+count+") "+Arrays.toString(test)+"\nresult = "+result);
+			if(
+//					result.equals(Arrays.toString(pattern1)) ||
+					result.equals(Arrays.toString(pattern2)) 
+					)System.out.println("    THE ABOVE PATTERN IS RECOGNIZED!!!");
+//			else System.out.println("    THE ABOVE IS not RECOGNIZED!!!");
 			count++;
 		}
 	}

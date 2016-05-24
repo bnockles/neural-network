@@ -1,106 +1,241 @@
 package network;
-
+/**
+ * MatrixMath: This class can perform many different mathematical
+ * operations on matrixes.
+ * 
+ * @author Jeff Heaton
+ * @version 2.1
+ */
 public class MatrixMath {
 
-	public static void multiplyScalar(Matrix m, double scalar){
-		for(int r = 0; r < m.getHeight(); r++){
-			for(int c = 0; c < m.getWidth(); c++){
-				m.set(r, c, scalar*m.get(r, c));
+	public static Matrix add(final Matrix a, final Matrix b) {
+		if (a.getRows() != b.getRows()) {
+			throw new MatrixError(
+					"To add the matrices they must have the same number of rows and columns.  Matrix a has "
+							+ a.getRows()
+							+ " rows and matrix b has "
+							+ b.getRows() + " rows.");
+		}
+
+		if (a.getCols() != b.getCols()) {
+			throw new MatrixError(
+					"To add the matrices they must have the same number of rows and columns.  Matrix a has "
+							+ a.getCols()
+							+ " cols and matrix b has "
+							+ b.getCols() + " cols.");
+		}
+
+		final double result[][] = new double[a.getRows()][a.getCols()];
+
+		for (int resultRow = 0; resultRow < a.getRows(); resultRow++) {
+			for (int resultCol = 0; resultCol < a.getCols(); resultCol++) {
+				result[resultRow][resultCol] = a.get(resultRow, resultCol)
+						+ b.get(resultRow, resultCol);
 			}
 		}
+
+		return new Matrix(result);
 	}
 
-	public static void divide(Matrix m, double scalar){
-		multiplyScalar(m, 1/scalar);
-	}
-
-	public static Matrix add(Matrix m1, Matrix m2){
-		return addSubtract(m1, m2, 1);
-	}
-
-	public static Matrix subtract(Matrix m1, Matrix m2){
-		return addSubtract(m1, m2, -1);
-	}
-
-	public static Matrix addSubtract(Matrix m1, Matrix m2, double posOrNeg){
-		int rows = m1.getHeight();
-		int cols = m1.getWidth();
-		if(rows == m2.getHeight() && cols == m2.getWidth()){
-			Matrix sum = new Matrix(rows, cols);
-			for(int r = 0; r < rows; r++){
-				for(int c = 0; c < cols; c++){
-					sum.set(r, c, m1.get(r, c)+posOrNeg*m2.get(r, c));
-				}
-			}
-			return sum;	
-		}else return null;
-	}
-
-
-	public static Matrix transpose(Matrix m){
-		Matrix transposed = new Matrix(m.getWidth(), m.getHeight());
-		for(int i =m.getHeight()-1; i >=0; i--){
-			for(int j = 0 ; j < m.getWidth(); j++){
-				transposed.set(j, i, m.get(i, j));
+	public static void copy(final Matrix source, final Matrix target) {
+		for (int row = 0; row < source.getRows(); row++) {
+			for (int col = 0; col < source.getCols(); col++) {
+				target.set(row, col, source.get(row, col));
 			}
 		}
-		return transposed;
+
 	}
 
-	public double vectorLength(Matrix m){
-		if(m.isVector()){
-			double l = 0.0;
-			//TODO write equation for vector length
-			if(m.getWidth()==1 && m.getHeight() ==1)return m.get(0, 0);
-			else if(m.getWidth() ==1){
-				for(int row = 0; row < m.getHeight(); row++){
-					l+=Math.pow(m.get(row, 0),2);
+
+
+	public static Matrix deleteCol(final Matrix matrix, final int deleted) {
+		if (deleted >= matrix.getCols()) {
+			throw new MatrixError("Can't delete column " + deleted
+					+ " from matrix, it only has " + matrix.getCols()
+					+ " columns.");
+		}
+		final double newMatrix[][] = new double[matrix.getRows()][matrix
+				.getCols() - 1];
+
+		for (int row = 0; row < matrix.getRows(); row++) {
+			int targetCol = 0;
+
+			for (int col = 0; col < matrix.getCols(); col++) {
+				if (col != deleted) {
+					newMatrix[row][targetCol] = matrix.get(row, col);
+					targetCol++;
 				}
-				return Math.sqrt(l);
-			}else{
-				for(int col = 0; col < m.getWidth(); col++){
-					l+=Math.pow(m.get(0, col),2);
-				}
-				return Math.sqrt(l);
+
 			}
-		}else return -1.0;
+
+		}
+		return new Matrix(newMatrix);
 	}
 
-	public static double dotProduct(Matrix m1, Matrix m2){
-		if(m1.getWidth() == m2.getHeight()){
-			double result = 0.0;
-			for(int row = 0; row < m1.getHeight(); row ++){
-				for(int col = 0; col < m2.getWidth(); col++){
-					//get dot product
-					for(int i = 0; i<m1.getWidth(); i++){
-						result +=m1.get(row, i)*m2.get(i, col);
-					}
+	public static Matrix deleteRow(final Matrix matrix, final int deleted) {
+		if (deleted >= matrix.getRows()) {
+			throw new MatrixError("Can't delete row " + deleted
+					+ " from matrix, it only has " + matrix.getRows()
+					+ " rows.");
+		}
+		final double newMatrix[][] = new double[matrix.getRows() - 1][matrix
+				.getCols()];
+		int targetRow = 0;
+		for (int row = 0; row < matrix.getRows(); row++) {
+			if (row != deleted) {
+				for (int col = 0; col < matrix.getCols(); col++) {
+					newMatrix[targetRow][col] = matrix.get(row, col);
 				}
+				targetRow++;
 			}
-			return result;
-		}else return 0.0;
+		}
+		return new Matrix(newMatrix);
 	}
-	
-	public static Matrix multiply(Matrix m1, Matrix m2){
-			Matrix product = new Matrix(m1.getHeight(), m2.getWidth());
-			for(int row = 0; row < m1.getHeight(); row ++){
-				for(int col = 0; col < m2.getWidth(); col++){
-//					//get dot product
-					double result = 0.0;
-					for(int i = 0; i<m1.getWidth(); i++){
-						result +=m1.get(row, i)*m2.get(i, col);
-					}
-					product.set(row, col,result);
+
+	public static Matrix divide(final Matrix a, final double b) {
+		final double result[][] = new double[a.getRows()][a.getCols()];
+		for (int row = 0; row < a.getRows(); row++) {
+			for (int col = 0; col < a.getCols(); col++) {
+				result[row][col] = a.get(row, col) / b;
+			}
+		}
+		return new Matrix(result);
+	}
+
+	public static double dotProduct(final Matrix a, final Matrix b) {
+		if (!a.isVector() || !b.isVector()) {
+			throw new MatrixError(
+					"To take the dot product, both matrices must be vectors.");
+		}
+
+		final Double aArray[] = a.toPackedArray();
+		final Double bArray[] = b.toPackedArray();
+
+		if (aArray.length != bArray.length) {
+			throw new MatrixError(
+					"To take the dot product, both matrices must be of the same length.");
+		}
+
+		double result = 0;
+		final int length = aArray.length;
+
+		for (int i = 0; i < length; i++) {
+			result += aArray[i] * bArray[i];
+		}
+
+		return result;
+	}
+
+	public static Matrix identity(final int size) {
+		if (size < 1) {
+			throw new MatrixError("Identity matrix must be at least of size 1.");
+		}
+
+		final Matrix result = new Matrix(size, size);
+
+		for (int i = 0; i < size; i++) {
+			result.set(i, i, 1);
+		}
+
+		return result;
+	}
+
+	public static Matrix multiply(final Matrix a, final double b) {
+		final double result[][] = new double[a.getRows()][a.getCols()];
+		for (int row = 0; row < a.getRows(); row++) {
+			for (int col = 0; col < a.getCols(); col++) {
+				result[row][col] = a.get(row, col) * b;
+			}
+		}
+		return new Matrix(result);
+	}
+
+	public static Matrix multiply(final Matrix a, final Matrix b) {
+		if (a.getCols() != b.getRows()) {
+			throw new MatrixError(
+					"To use ordinary matrix multiplication the number of columns on the first matrix must mat the number of rows on the second.");
+		}
+
+		final double result[][] = new double[a.getRows()][b.getCols()];
+
+		for (int resultRow = 0; resultRow < a.getRows(); resultRow++) {
+			for (int resultCol = 0; resultCol < b.getCols(); resultCol++) {
+				double value = 0;
+
+				for (int i = 0; i < a.getCols(); i++) {
+
+					value += a.get(resultRow, i) * b.get(i, resultCol);
 				}
+				result[resultRow][resultCol] = value;
 			}
-			return product;
+		}
 
+		return new Matrix(result);
 	}
 
-	public static Matrix identity(int rows){
-		Matrix ident = new Matrix(rows,rows);
-		for(int i = 0; i< rows; i++)ident.set(i, i, 1);
-		return ident;
+	public static Matrix subtract(final Matrix a, final Matrix b) {
+		if (a.getRows() != b.getRows()) {
+			throw new MatrixError(
+					"To subtract the matrices they must have the same number of rows and columns.  Matrix a has "
+							+ a.getRows()
+							+ " rows and matrix b has "
+							+ b.getRows() + " rows.");
+		}
+
+		if (a.getCols() != b.getCols()) {
+			throw new MatrixError(
+					"To subtract the matrices they must have the same number of rows and columns.  Matrix a has "
+							+ a.getCols()
+							+ " cols and matrix b has "
+							+ b.getCols() + " cols.");
+		}
+
+		final double result[][] = new double[a.getRows()][a.getCols()];
+
+		for (int resultRow = 0; resultRow < a.getRows(); resultRow++) {
+			for (int resultCol = 0; resultCol < a.getCols(); resultCol++) {
+				result[resultRow][resultCol] = a.get(resultRow, resultCol)
+						- b.get(resultRow, resultCol);
+			}
+		}
+
+		return new Matrix(result);
+	}
+
+	public static Matrix transpose(final Matrix input) {
+		final double inverseMatrix[][] = new double[input.getCols()][input
+				.getRows()];
+
+		for (int r = 0; r < input.getRows(); r++) {
+			for (int c = 0; c < input.getCols(); c++) {
+				inverseMatrix[c][r] = input.get(r, c);
+			}
+		}
+
+		return new Matrix(inverseMatrix);
+	}
+
+	/**
+	 * Calculate the length of a vector.
+	 * 
+	 * @param v
+	 *            vector
+	 * @return Vector length.
+	 */
+	public static double vectorLength(final Matrix input) {
+		if (!input.isVector()) {
+			throw new MatrixError(
+					"Can only take the vector length of a vector.");
+		}
+		final Double v[] = input.toPackedArray();
+		double rtn = 0.0;
+		for (int i = 0; i < v.length; i++) {
+			rtn += Math.pow(v[i], 2);
+		}
+		return Math.sqrt(rtn);
+	}
+
+	private MatrixMath() {
 	}
 
 }
